@@ -5,87 +5,95 @@ namespace Course;
 
 public class Program
 {
-    private static void Main(string[] args)
+    private static string currentDir = Directory.GetCurrentDirectory();
+
+    private static void Main()
     {
         IFileService fileService = new FileService();
         IFolderService folderService = new FolderService();
 
-        while (true)
+        while(true)
         {
-            Console.WriteLine("\n");
-            Console.WriteLine("0. Выход");
-            Console.WriteLine("1. Создать текстовый файл");
-            Console.WriteLine("2. Прочитать файл");
-            Console.WriteLine("3. Создать папку");
+            Console.Write($"{currentDir}> ");
+            string input = Console.ReadLine();
+            if(string.IsNullOrWhiteSpace(input)) continue;
 
-            var input = Console.ReadLine();
+            string[] parts = input.Split(' ', 2);
+            string command = parts[0].ToLower();
+            string args = parts.Length > 1 ? parts[1] : "";
 
-            switch (input)
-            {
-                case "0": return;
-                case "1":
-                    CreateFile(fileService);
-                    break;
-                case "2":
-                    ReadFile(fileService);
-                    break;
-                case "3":
-                    CreateFolder(folderService);
-                    break;
-                default:
-                    Console.WriteLine("Неправильный ввод");
-                    break;
-            }
-        }
-
-        static void CreateFile(IFileService fileService)
-        {
-            Console.WriteLine("Введите путь к файлу");
-            string path = Console.ReadLine();
-
-            Console.WriteLine("Введите содержимое фалйа");
-            string content = Console.ReadLine();
-
-            fileService.CreateFile(path, content);
-        }
-
-        static void ReadFile(IFileService fileService)
-        {
-            Console.WriteLine("Введите путь к файлу");
-            string path = Console.ReadLine();
             try
             {
-                string text = fileService.ReadFile(path);
-                Console.WriteLine("Содержимое файла");
-                Console.WriteLine(text);
+                switch(command)
+                {
+                    case "cd":
+                        ChangeDirectory(args);
+                        break;
+                    case "dir":
+                        ListDirectory(folderService, fileService);
+                        break;
+                    case "md":
+                    case "mkdir":
+                        folderService.CreateFolder(Path.Combine(currentDir, args));
+                        break;
+                    case "rd":
+                    case "rmdir":
+                        folderService.DeleteFolder(Path.Combine(currentDir, args));
+                        break;
+                    case "del":
+                    case "erase":
+                        fileService.DeleteFile(Path.Combine(currentDir, args));
+                        break;
+                    case "copy":
+                        {
+                            string[] argParts = args.Split(' ');
+                            fileService.CopyFile(Path.Combine(currentDir, argParts[0]), Path.Combine(currentDir, argParts[1]));
+                        }
+                        break;
+                    case "move":
+                        {
+                            string[] argParts = args.Split(' ');
+                            fileService.MoveFile(Path.Combine(currentDir, argParts[0]), Path.Combine(currentDir, argParts[1]));
+                        }
+                        break;
+                    case "ren":
+                    case "rename":
+                        {
+                            string[] argParts = args.Split(' ');
+                            fileService.RenameFile(Path.Combine(currentDir, argParts[0]), argParts[1]);
+                        }
+                        break;
+                    case "type":
+                        Console.WriteLine(fileService.ReadFile(Path.Combine(currentDir, args)));
+                        break;
+                    case "exit":
+                        return;
+                    default:
+                        Console.WriteLine("Команда не найдена");
+                        break;
+                }
             }
-            catch (Exception ex)
+            catch(Exception ex)
             {
-                Console.WriteLine("Ошибка: " + ex.Message);
-            }
-        }
-
-        void CreateFolder(IFolderService folderService)
-        {
-            Console.WriteLine("Введите путь к файлу");
-            string path = Console.ReadLine();
-            
-            Console.WriteLine("Введите имя папки");
-            string name = Console.ReadLine();
-
-            string fullPath = Path.Combine(path, name);
-            try
-            {
-                folderService.CreateFolder(fullPath);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Ошибка: " + ex.Message);
-                throw;
+                Console.WriteLine(ex.Message);
             }
         }
     }
-}
-//переместить, редактировать?, удалить, переиминовать, копировать, посмореть свойства и для папок
 
-//сделать ввод не список возможностей и как cmd(cd, dir ...)
+    private static void ChangeDirectory(string path)
+    {
+        string newDir = Path.IsPathRooted(path) ? path : Path.Combine(currentDir, path);
+        if(Directory.Exists(newDir))
+            currentDir = Path.GetFullPath(newDir);
+        else
+            Console.WriteLine("Путь не найден");
+    }
+
+    private static void ListDirectory(IFolderService folderService, IFileService fileService)
+    {
+        foreach(var dir in folderService.GetDirectories(currentDir))
+            Console.WriteLine($"<DIR> {Path.GetFileName(dir)}");
+        foreach(var file in folderService.GetFiles(currentDir))
+            Console.WriteLine(Path.GetFileName(file));
+    }
+}

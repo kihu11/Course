@@ -4,9 +4,14 @@ namespace Course.FileManager.Infrastructure;
 
 public class FolderService : IFolderService
 {
-    public void CreateFolder(string path)
+    public void CreateFolder(string path) => Directory.CreateDirectory(path);
+    public void DeleteFolder(string path) { if(Directory.Exists(path)) Directory.Delete(path, true); }
+    public void RenameFolder(string path, string newName)
     {
-        if (path == null) throw new ArgumentNullException("Пустой путь");
-        Directory.CreateDirectory(path);
+        string parent = Path.GetDirectoryName(path);
+        string newPath = Path.Combine(parent, newName);
+        Directory.Move(path, newPath);
     }
+    public string[] GetFiles(string path) => Directory.Exists(path) ? Directory.GetFiles(path) : Array.Empty<string>();
+    public string[] GetDirectories(string path) => Directory.Exists(path) ? Directory.GetDirectories(path) : Array.Empty<string>();
 }
