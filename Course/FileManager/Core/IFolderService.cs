@@ -9,6 +9,6 @@ public interface IFolderService
 
     string[] GetFiles(string path);
     string[] GetDirectories(string path);
-
-    DirectoryInfo GetFolderInfo(string path);
+    FolderDetails GetFolderDetails(string path);
+    
 }

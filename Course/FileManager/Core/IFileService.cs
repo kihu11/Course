@@ -10,6 +10,5 @@ public interface IFileService
     void CopyFile(string source, string destination);
     void MoveFile(string source, string destination);
     void RenameFile(string path, string newName);
-
     FileInfo GetFileInfo(string path);
 }
